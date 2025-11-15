@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dynamic Notes Organizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        integrity="sha512-papNMp+QfG0XgIR+YfBcT4gQwVwRVzQX0T0GJvY5C72vHq8MyQ3SfHq6vS2uX3F1QH7+1m0LPF9jNnqIDgR4xQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+
+  <div class="max-w-6xl mx-auto">
+
+    <header class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-extrabold text-purple-700">📚 Notes Organizer</h1>
+
+      <!-- Quick add folder button -->
+      <div class="flex items-center gap-3">
+        <button id="importBtn" class="text-sm text-gray-600 px-3 py-2 rounded hover:bg-gray-100">Import (CSV)</button>
+        <button id="clearAllBtn" class="text-sm text-red-600 px-3 py-2 rounded hover:bg-red-50">Clear All</button>
+        <button id="openAddModal" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">+ Add Folder</button>
+      </div>
+    </header>
+
+    <!-- Add folder / Add doc modal (reused) -->
+    <div id="modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-40">
+      <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-lg">
+        <h3 id="modalTitle" class="text-xl font-semibold text-gray-800 mb-4">Add Folder</h3>
+
+        <div id="modalBody" class="space-y-3">
+          <!-- Folder form -->
+          <div id="folderForm">
+            <label class="block text-sm text-gray-600">Folder (Subject) name</label>
+            <input id="folderName" type="text" class="w-full p-2 border rounded" placeholder="e.g. Physics">
+          </div>
+
+          <!-- Doc form (hidden by default; used when adding inside a folder) -->
+          <div id="docForm" class="hidden">
+            <label class="block text-sm text-gray-600">Document title</label>
+            <input id="docTitle" type="text" class="w-full p-2 border rounded" placeholder="e.g. Kinematics Notes">
+            <label class="block text-sm text-gray-600 mt-2">Document link (Google Doc URL)</label>
+            <input id="docUrl" type="url" class="w-full p-2 border rounded" placeholder="https://docs.google.com/...">
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <button id="modalCancel" class="px-4 py-2 rounded border hover:bg-gray-50">Cancel</button>
+          <button id="modalSave" class="px-4 py-2 rounded bg-purple-600 text-white hover:bg-purple-700">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Folder grid -->
+    <main>
+      <div id="folderGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="mt-12 text-center text-gray-500">
+      <p class="text-lg">No folders yet — click <span class="font-semibold text-purple-700">Add Folder</span> to get started.</p>
+    </div>
+  </div>
+
+<script>
+/*
+ Dynamic Notes Organizer
+ - Folders stored in localStorage as an object: { folderName: [{title, url, id}, ...], ... }
+ - UI supports: add folder, delete folder, add doc (title + url), delete doc, open doc (new tab)
+ - Uses a modal to add folder / add doc.
+*/
+
+// Helpers
+const qs = (s, parent=document) => parent.querySelector(s);
+const qe = (s, parent=document) => parent.querySelectorAll(s);
+const randId = () => Math.random().toString(36).slice(2, 9);
+
+// Storage key
+const STORAGE_KEY = 'notesOrganizer_v1';
+
+// DOM refs
+const folderGrid = qs('#folderGrid');
+const openAddModalBtn = qs('#openAddModal');
+const modal = qs('#modal');
+const modalTitle = qs('#modalTitle');
+const folderForm = qs('#folderForm');
+const docForm = qs('#docForm');
+const folderNameInput = qs('#folderName');
+const docTitleInput = qs('#docTitle');
+const docUrlInput = qs('#docUrl');
+const modalCancel = qs('#modalCancel');
+const modalSave = qs('#modalSave');
+const emptyState = qs('#emptyState');
+const clearAllBtn = qs('#clearAllBtn');
+
+// current modal mode = 'addFolder' | 'addDoc', and currentFolder when adding doc
+let modalMode = null;
+let currentFolder = null;
+
+// load state
+let folders = loadFromStorage();
+
+// initial render
+renderGrid();
+
+// Event listeners
+openAddModalBtn.addEventListener('click', () => openModal('addFolder'));
+modalCancel.addEventListener('click', closeModal);
+modal.addEventListener('click', (e)=> { if (e.target === modal) closeModal(); });
+clearAllBtn.addEventListener('click', () => {
+  if (!confirm('Clear ALL folders and docs? This cannot be undone.')) return;
+  folders = {};
+  saveToStorage();
+  renderGrid();
+});
+
+// Modal mode helper
+function openModal(mode, folder=null) {
+  modalMode = mode;
+  currentFolder = folder;
+  modal.classList.remove('hidden');
+  if (mode === 'addFolder') {
+    modalTitle.textContent = 'Add Folder (Subject)';
+    folderForm.classList.remove('hidden');
+    docForm.classList.add('hidden');
+    folderNameInput.value = '';
+    folderNameInput.focus();
+  } else if (mode === 'addDoc') {
+    modalTitle.textContent = `Add Document to "${folder}"`;
+    folderForm.classList.add('hidden');
+    docForm.classList.remove('hidden');
+    docTitleInput.value = '';
+    docUrlInput.value = '';
+    docTitleInput.focus();
+  }
+}
+
+function closeModal() {
+  modal.classList.add('hidden');
+  modalMode = null;
+  currentFolder = null;
+}
+
+// Save modal action
+modalSave.addEventListener('click', () => {
+  if (modalMode === 'addFolder') {
+    const name = folderNameInput.value.trim();
+    if (!name) { alert('Please enter a folder name'); return; }
+    if (folders[name]) { alert('Folder already exists'); return; }
+    folders[name] = [];
+    saveToStorage();
+    renderGrid();
+    closeModal();
+  } else if (modalMode === 'addDoc') {
+    const title = docTitleInput.value.trim();
+    const url = docUrlInput.value.trim();
+    if (!title || !url) { alert('Please enter both title and URL'); return; }
+    // add doc object
+    const docObj = { id: randId(), title, url };
+    folders[currentFolder].push(docObj);
+    saveToStorage();
+    renderGrid();
+    closeModal();
+  }
+});
+
+// Create folder card DOM
+function makeFolderCard(folderName, docs) {
+  const card = document.createElement('div');
+  card.className = 'bg-white shadow-lg rounded-2xl overflow-hidden flex flex-col';
+
+  // card header
+  const header = document.createElement('div');
+  header.className = 'flex items-center justify-between p-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white';
+  header.innerHTML = `
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-folder text-yellow-300 text-2xl"></i>
+      <div>
+        <div class="text-sm opacity-90">Subject</div>
+        <div class="text-lg font-semibold">${escapeHtml(folderName)}</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="addDocBtn text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30">+ Add Doc</button>
+      <button class="deleteFolderBtn text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30">Delete</button>
+    </div>
+  `;
+  card.appendChild(header);
+
+  // docs area
+  const body = document.createElement('div');
+  body.className = 'p-4 bg-gray-50 flex-1';
+  // if no docs, show placeholder
+  if (!docs || docs.length === 0) {
+    const ph = document.createElement('div');
+    ph.className = 'text-gray-500 text-sm italic';
+    ph.textContent = 'No documents yet';
+    body.appendChild(ph);
+  } else {
+    // docs grid
+    const grid = document.createElement('div');
+    grid.className = 'grid grid-cols-1 gap-3';
+    docs.forEach(doc => {
+      const tile = document.createElement('div');
+      tile.className = 'flex items-center justify-between bg-white border rounded-lg p-3 shadow-sm';
+      tile.innerHTML = `
+        <div class="flex items-center gap-3">
+          <i class="fa-brands fa-google text-purple-600 text-xl"></i>
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-gray-800 truncate">${escapeHtml(doc.title)}</div>
+            <div class="text-xs text-gray-500 truncate">${getDomain(doc.url)}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="openDocBtn text-sm text-purple-600 px-2 py-1 rounded hover:bg-purple-50">Open</button>
+          <button class="delDocBtn text-sm text-red-500 px-2 py-1 rounded hover:bg-red-50">Delete</button>
+        </div>
+      `;
+      // attach dataset for actions
+      tile.querySelector('.openDocBtn').addEventListener('click', () => window.open(doc.url, '_blank'));
+      tile.querySelector('.delDocBtn').addEventListener('click', () => {
+        if (!confirm(`Delete "${doc.title}" from ${folderName}?`)) return;
+        folders[folderName] = folders[folderName].filter(d => d.id !== doc.id);
+        saveToStorage();
+        renderGrid();
+      });
+      grid.appendChild(tile);
+    });
+    body.appendChild(grid);
+  }
+
+  card.appendChild(body);
+
+  // footer with doc count
+  const footer = document.createElement('div');
+  footer.className = 'flex items-center justify-between px-4 py-3 text-sm text-gray-600 border-t';
+  footer.innerHTML = `
+    <div>${(docs || []).length} document(s)</div>
+    <div class="text-xs italic">Updated just now</div>
+  `;
+  card.appendChild(footer);
+
+  // hooks for buttons
+  card.querySelector('.addDocBtn').addEventListener('click', () => openModal('addDoc', folderName));
+  card.querySelector('.deleteFolderBtn').addEventListener('click', () => {
+    if (!confirm(`Delete entire folder "${folderName}" and all its docs?`)) return;
+    delete folders[folderName];
+    saveToStorage();
+    renderGrid();
+  });
+
+  return card;
+}
+
+// render the folder grid
+function renderGrid() {
+  folderGrid.innerHTML = '';
+  const keys = Object.keys(folders);
+  if (keys.length === 0) {
+    emptyState.style.display = 'block';
+  } else {
+    emptyState.style.display = 'none';
+    keys.forEach(k => {
+      const card = makeFolderCard(k, folders[k]);
+      folderGrid.appendChild(card);
+    });
+  }
+}
+
+// persist & load
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(folders));
+  } catch(e) {
+    console.error('Could not save to localStorage', e);
+  }
+}
+function loadFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) {
+    console.error('Could not parse storage -> clearing', e);
+    localStorage.removeItem(STORAGE_KEY);
+    return {};
+  }
+}
+
+// small helpers
+function getDomain(url) {
+  try {
+    const u = new URL(url);
+    return u.hostname.replace('www.', '');
+  } catch (e) {
+    return '';
+  }
+}
+function escapeHtml(s){
+  return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+// initialize 'folders' variable (loaded earlier)
+function loadInitial() {
+  // folders was loaded at top; if empty show empty state
+  renderGrid();
+}
+
+// optional: import CSV (very basic) — expects lines: folder,docTitle,docUrl
+qs('#importBtn').addEventListener('click', () => {
+  const csv = prompt('Paste CSV lines (folder, title, url) — one per line');
+  if (!csv) return;
+  csv.split('\n').forEach(line => {
+    const parts = line.split(',').map(p => p.trim());
+    if (parts.length >= 3) {
+      const [folder, title, url] = parts;
+      if (!folders[folder]) folders[folder] = [];
+      folders[folder].push({ id: randId(), title, url });
+    }
+  });
+  saveToStorage();
+  renderGrid();
+});
+
+// initialize UI
+loadInitial();
+
+</script>
+</body>
+</html>

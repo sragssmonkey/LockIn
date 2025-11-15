@@ -1,0 +1,364 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>LockIn</title>
+</head>
+<body class="bg-white text-gray-900">
+
+  <!-- 🟣 Navigation Bar -->
+ <!-- 🌈 Navbar -->
+  <nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl 
+              bg-gradient-to-r from-purple-700 to-purple-500 
+              text-white flex justify-between items-center 
+              px-6 py-3 rounded-3xl shadow-xl backdrop-blur-md 
+              border border-white/20 transition-all duration-500 
+              z-50">
+
+    <!-- Brand -->
+    <div class="text-2xl font-bold tracking-wide hover:scale-105 transition-transform duration-300">
+      Lock<span class="text-purple-200">In</span>
+    </div>
+
+    <!-- Links -->
+    <div class="flex items-center gap-6 text-lg">
+      <a href="#" class="relative group">
+        Home
+        <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+      </a>
+      <a href="{% url 'upload_pdf' %}" class="relative group">
+        PDF Analyser
+        <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+      </a>
+      <a href="{% url 'notebook' %}" class="relative group">
+        Notebook
+        <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+      </a>
+      <a href="{% url 'habit' %}" class="relative group">
+        Habit Tracker
+        <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+      </a>
+      <a href="{% url 'pomodoro' %}" class="relative group">
+        Pomodoro
+        <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+      </a>
+
+      {% if user.is_authenticated %}
+      <span class="text-sm bg-white/10 px-3 py-1 rounded-full">
+          Hi, <strong>{{ user.username }}</strong> 👋
+      </span>
+
+      <form method="POST" action="{% url 'logout' %}" class="inline">
+          {% csrf_token %}
+          <button type="submit"
+            class="relative group px-3 py-1 rounded-lg transition duration-300">
+            Logout
+            <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+          </button>
+      </form>
+
+  {% else %}
+      <a href="{% url 'signup' %}" 
+        class="relative group px-3 py-1 rounded-lg transition duration-300">
+        Sign Up
+        <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+      </a>
+
+      <a href="{% url 'login' %}" 
+        class="relative group px-3 py-1 rounded-lg transition duration-300">
+        Login
+        <span class="absolute left-0 bottom-0 w-0 h-[2px] bg-white group-hover:w-full transition-all duration-300"></span>
+      </a>
+  {% endif %}
+
+    </div>
+  </nav>
+
+
+  <!-- 🖼️ Image Slider Section -->
+  <section id="image-slider" class="bg-gradient-to-b from-purple-100 to-white flex justify-center items-center p-10 mt-28">
+
+    <div class="relative w-[900px] h-[500px] overflow-hidden rounded-3xl shadow-2xl group select-none">
+
+      <!-- SLIDES -->
+      <div id="carouselImages"
+          class="flex transition-transform duration-[800ms] ease-out">
+        <img src="{% static 'core/images/study1.jfif' %}" class="w-full flex-shrink-0 object-cover">
+        <img src="{% static 'core/images/study2.jfif' %}" class="w-full flex-shrink-0 object-cover">
+        <img src="{% static 'core/images/phy.jfif' %}" class="w-full flex-shrink-0 object-cover">
+      </div>
+
+      <!-- OVERLAY CONTENT -->
+      <div class="absolute inset-0 bg-purple-900/40 
+                  flex flex-col justify-center items-center text-center text-white 
+                  transition-all duration-700 group-hover:bg-transparent">
+
+        <h1 class="text-6xl font-extrabold tracking-wider drop-shadow-md
+                  transition-all duration-700 group-hover:text-purple-700">
+          LOCK IN
+        </h1>
+
+        <p class="text-2xl mt-4 drop-shadow-md font-[Poppins]
+           transition-all duration-700 group-hover:text-purple-700">
+          Your Personalized Study Companion
+        </p>
+
+
+      </div>
+
+      <!-- NAV BUTTONS -->
+      <button id="prevBtn"
+              class="absolute top-1/2 left-4 -translate-y-1/2 
+                    backdrop-blur-md bg-white/20 hover:bg-white/40
+                    shadow-lg rounded-full p-3 transition">
+        <span class="text-3xl font-bold text-white">&#10094;</span>
+      </button>
+
+      <button id="nextBtn"
+              class="absolute top-1/2 right-4 -translate-y-1/2 
+                    backdrop-blur-md bg-white/20 hover:bg-white/40
+                    shadow-lg rounded-full p-3 transition">
+        <span class="text-3xl font-bold text-white">&#10095;</span>
+      </button>
+
+      <!-- DOT INDICATORS -->
+      <div id="dots" class="absolute bottom-5 w-full flex justify-center gap-2">
+        <div class="dot w-3 h-3 bg-white/40 rounded-full"></div>
+        <div class="dot w-3 h-3 bg-white/40 rounded-full"></div>
+        <div class="dot w-3 h-3 bg-white/40 rounded-full"></div>
+      </div>
+
+    </div>
+  </section>
+  <!-- ================= STUDY HEATMAP ================= -->
+  <section id="study-heatmap" class="py-16 bg-white text-center">
+    <h2 class="text-3xl font-extrabold mb-8 text-purple-700">Study Heatmap</h2>
+
+    <div class="max-w-4xl mx-auto grid grid-cols-7 gap-2" id="heatmap-grid">
+      <!-- JS will auto-generate the days -->
+    </div>
+
+    <p class="mt-4 text-gray-500 text-sm">
+      Click on a day to log study minutes.
+    </p>
+  </section>
+
+
+  <!-- 🌟 Features Section -->
+  <section id="features" class="py-20 bg-purple-700 text-center">
+    <h2 class="text-4xl font-extrabold mb-12 text-white">Features</h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-8 max-w-6xl mx-auto">
+
+      <!-- 🟣 Feature Card 1 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <h3 class="text-2xl font-semibold text-purple-700 mb-3">PDF Analyser</h3>
+        <p class="text-gray-600">AI-powered analyser that extracts and summarises key insights from your study materials.</p>
+      </div>
+
+      <!-- 🟣 Feature Card 2 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+          <h3 class="text-2xl font-semibold text-purple-700 mb-3">Flash Cards</h3>
+          <p class="text-gray-600">Upload your PDF and instantly get AI-generated flashcards for fast revision.</p>
+      </div>
+
+
+      <!-- 🟣 Feature Card 3 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <h3 class="text-2xl font-semibold text-purple-700 mb-3">Progress</h3>
+        <p class="text-gray-600">Track your quiz performance and view topic-wise summaries of weak areas.</p>
+      </div>
+
+      <!-- 🟣 Feature Card 4 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <h3 class="text-2xl font-semibold text-purple-700 mb-3">Notebook</h3>
+        <p class="text-gray-600">Organize all your notes in one digital space with easy access and search features.</p>
+      </div>
+
+      <!-- 🟣 Feature Card 5 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <h3 class="text-2xl font-semibold text-purple-700 mb-3">Pomodoro</h3>
+        <p class="text-gray-600">Stay focused and productive by studying with customizable Pomodoro cycles.</p>
+      </div>
+
+      <!-- 🟣 Feature Card 6 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <h3 class="text-2xl font-semibold text-purple-700 mb-3">Habit Tracker</h3>
+        <p class="text-gray-600">Create your study vision board, set long-term goals, and track your daily progress.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 🖼️ Photos Section -->
+  <section id="photos" class="py-12 bg-white text-center">
+    <h2 class="text-2xl font-bold mb-6 text-purple-700">Study Goals</h2>
+    <div class="columns-1 sm:columns-2 md:columns-3 gap-4 p-4 max-w-screen-xl mx-auto">
+              <img src="{% static 'core/images/bg1.jfif' %}" class="mb-4 transform hover:scale-105 transition duration-300 rounded-2xl w-full h-[30rem] object-cover" />
+              <img src="{% static 'core/images/bg2.jfif' %}" class="mb-4 transform hover:scale-105 transition duration-300 rounded-2xl w-full h-[15rem] object-cover" />
+              <img src="{% static 'core/images/bg3.jfif' %}" class="mb-4 transform hover:scale-105 transition duration-300 rounded-2xl w-full h-[15rem] object-cover" />
+              <img src="{% static 'core/images/bg4.jfif' %}" class="mb-4 transform hover:scale-105 transition duration-300 rounded-2xl w-full h-[30rem] object-cover" />
+              <img src="{% static 'core/images/bg5.jfif' %}" class="mb-4 transform hover:scale-105 transition duration-300 rounded-2xl w-full h-[30rem] object-cover" />
+              <img src="{% static 'core/images/bg6.jfif' %}" class="mb-4 transform hover:scale-105 transition duration-300 rounded-2xl w-full h-[15rem] object-cover" />
+    </div>
+  </section>
+
+  <!-- 💬 Feedback Section -->
+  <section id="feedbacks" class="py-20 bg-gray-50 text-center">
+    <h2 class="text-4xl font-extrabold mb-12 text-purple-700">What Our Users Say</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 px-8 max-w-6xl mx-auto">
+
+      <!-- 🌟 Feedback Card 1 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <div class="flex flex-col items-center">
+          <img src="https://i.pravatar.cc/100?img=1" alt="User 1" class="w-20 h-20 rounded-full mb-4 shadow-md">
+          <h3 class="text-lg font-semibold text-purple-700">Aarav Mehta</h3>
+          <p class="text-gray-500 text-sm mb-4">Student, IIT Delhi</p>
+          <p class="text-gray-600 italic">“LockIn has completely changed how I study. The PDF analyser saves me hours every week!”</p>
+        </div>
+      </div>
+
+      <!-- 🌟 Feedback Card 2 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <div class="flex flex-col items-center">
+          <img src="https://i.pravatar.cc/100?img=5" alt="User 2" class="w-20 h-20 rounded-full mb-4 shadow-md">
+          <h3 class="text-lg font-semibold text-purple-700">Saanvi Sharma</h3>
+          <p class="text-gray-500 text-sm mb-4">Aspiring Data Scientist</p>
+          <p class="text-gray-600 italic">“The quiz generator and habit tracker keep me accountable and make learning fun!”</p>
+        </div>
+      </div>
+
+      <!-- 🌟 Feedback Card 3 -->
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+        <div class="flex flex-col items-center">
+          <img src="https://i.pravatar.cc/100?img=8" alt="User 3" class="w-20 h-20 rounded-full mb-4 shadow-md">
+          <h3 class="text-lg font-semibold text-purple-700">Rohit Verma</h3>
+          <p class="text-gray-500 text-sm mb-4">Engineering Student</p>
+          <p class="text-gray-600 italic">“Pomodoro sessions and notebooks in one app — exactly what I needed to stay consistent.”</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="feedback-form" class="py-16 bg-white text-center">
+    <h2 class="text-3xl font-extrabold mb-8 text-purple-700">Share Your Feedback</h2>
+
+    <form class="max-w-lg mx-auto bg-gray-50 p-8 rounded-2xl shadow-lg space-y-6"
+      onsubmit="handleSubmit(event)">
+
+      
+      <!-- Name -->
+      <div class="text-left">
+        <label for="name" class="block text-gray-700 font-medium mb-2">Your Name</label>
+        <input type="text" id="name" name="name" 
+              placeholder="Enter your name"
+              class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition">
+      </div>
+
+      <!-- Email -->
+      <div class="text-left">
+        <label for="email" class="block text-gray-700 font-medium mb-2">Email</label>
+        <input type="email" id="email" name="email" 
+              placeholder="Enter your email"
+              class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition">
+      </div>
+
+      <!-- Message -->
+      <div class="text-left">
+        <label for="message" class="block text-gray-700 font-medium mb-2">Feedback</label>
+        <textarea id="message" name="message" rows="4"
+                  placeholder="Write your feedback..."
+                  class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit"
+              class="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-purple-700 hover:shadow-lg transition">
+        Submit Feedback
+      </button>
+    </form>
+  </section>
+
+
+  <!-- 🔚 Footer -->
+  <footer class="bg-purple-700 text-white text-center py-4">
+    <p> 2025 LockIn. All rights reserved.</p>
+  </footer>
+
+</body>
+
+<script>
+  const carousel = document.getElementById('carouselImages');
+  const slides = carousel.children;
+  const totalSlides = slides.length;
+  let index = 0;
+
+  function updateCarousel() {
+    carousel.style.transform = `translateX(-${index * 100}%)`;
+  }
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    index = (index + 1) % totalSlides;
+    updateCarousel();
+  });
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    index = (index - 1 + totalSlides) % totalSlides;
+    updateCarousel();
+  });
+  
+  function handleSubmit(event) {
+    event.preventDefault(); 
+    alert("Feedback submitted!");
+  }
+  document.addEventListener("DOMContentLoaded", generateHeatmap);
+
+  // Generate 30-day heatmap
+  function generateHeatmap() {
+    const grid = document.getElementById("heatmap-grid");
+    grid.innerHTML = "";
+
+    const today = new Date();
+    const studyLog = JSON.parse(localStorage.getItem("studyLog")) || {};
+
+    for (let i = 29; i >= 0; i--) {
+      let date = new Date();
+      date.setDate(today.getDate() - i);
+
+      const dateKey = date.toISOString().split("T")[0];
+      const minutes = studyLog[dateKey] || 0;
+
+      const intensity = getIntensity(minutes);
+
+      const cell = document.createElement("div");
+      cell.className = `w-8 h-8 rounded-lg cursor-pointer transition ${intensity}`;
+      cell.title = `${minutes} min`;
+
+      cell.onclick = () => {
+        const updated = JSON.parse(localStorage.getItem("studyLog")) || {};
+        updated[dateKey] = (updated[dateKey] || 0) + 30; // add 30 min per click
+        localStorage.setItem("studyLog", JSON.stringify(updated));
+        generateHeatmap();
+      };
+
+      grid.appendChild(cell);
+    }
+  }
+
+  // Color levels
+  function getIntensity(minutes) {
+    if (minutes === 0) return "bg-gray-200";
+    if (minutes < 30) return "bg-green-200";
+    if (minutes < 60) return "bg-green-400";
+    if (minutes < 120) return "bg-green-600";
+    return "bg-green-800";
+  }
+
+</script>
+</html>

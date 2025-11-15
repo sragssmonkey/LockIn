@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+  <title>Smart Study Timetable</title>
+</head>
+<body class="bg-purple-50">
+
+  <!-- 📈 Dynamic Timetable Generator Section -->
+  <section id="timetable-section" class="py-16 text-center">
+    <h2 class="text-4xl font-extrabold mb-6 text-purple-700">📈 Dynamic Timetable Generator</h2>
+    <p class="text-gray-600 mb-8">Enter your available study hours and subjects — get your smart study plan!</p>
+
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-lg space-y-6">
+      <!-- Available Hours -->
+      <div class="text-left">
+        <label for="hours" class="block text-gray-700 font-medium mb-2">Available Hours</label>
+        <input type="number" id="hours" placeholder="e.g. 6"
+          class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 transition" />
+      </div>
+
+      <!-- Subjects -->
+      <div class="text-left">
+        <label for="subjects" class="block text-gray-700 font-medium mb-2">Subjects (comma-separated)</label>
+        <input type="text" id="subjects" placeholder="Maths, Physics, Programming"
+          class="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 transition" />
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex justify-center gap-4">
+        <button id="generateBtn"
+          class="bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-purple-700 shadow-md transition">
+          Generate Timetable
+        </button>
+        <button id="downloadBtn"
+          class="bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-700 shadow-md transition hidden">
+          Download as PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Output Section -->
+    <div id="timetableOutput" class="max-w-4xl mx-auto mt-10 hidden">
+      <h3 class="text-2xl font-semibold text-purple-700 mb-6">🗓️ Your Study Plan</h3>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-gray-200 rounded-full h-4 mb-6 overflow-hidden">
+        <div id="progressBar" class="h-4 bg-purple-600 w-0 transition-all duration-500"></div>
+      </div>
+
+      <!-- Timetable Grid -->
+      <div id="timetableGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+    </div>
+    <!-- ================= 90-DAY GOALS PLANNER ================= -->
+    <section id="goals-90" class="py-16 bg-gray-50 text-center">
+      <h2 class="text-3xl font-extrabold mb-6 text-purple-700">90-Day Goals Planner</h2>
+
+      <div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-lg space-y-6">
+
+        <!-- Goal Name -->
+        <div class="text-left">
+          <label class="font-medium">Your Main Goal</label>
+          <input id="goal-name" class="w-full p-3 mt-2 border rounded-lg" placeholder="e.g. Master Web Development">
+        </div>
+
+        <!-- Why -->
+        <div class="text-left">
+          <label class="font-medium">Why This Goal?</label>
+          <textarea id="goal-why" class="w-full p-3 mt-2 border rounded-lg" placeholder="Your motivation..."></textarea>
+        </div>
+
+        <!-- Milestones -->
+        <div class="text-left">
+          <label class="font-medium">Milestones (Press Enter to Add)</label>
+          <input id="milestone-input" class="w-full p-3 mt-2 border rounded-lg" placeholder="e.g. Finish JavaScript">
+          <ul id="milestone-list" class="mt-2 space-y-2"></ul>
+        </div>
+
+        <!-- Weekly Check-ins -->
+        <div class="text-left">
+          <label class="font-medium">Weekly Check-in Notes</label>
+          <textarea id="weekly-notes" class="w-full p-3 mt-2 border rounded-lg" placeholder="How was your week?"></textarea>
+        </div>
+
+        <!-- Save Button -->
+        <button onclick="saveGoal90()" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
+          Save Goal Plan
+        </button>
+        <button onclick="deleteGoal90()"
+                class="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 mt-3">
+          Delete 90-Day Plan
+        </button>
+
+
+      </div>
+
+      <!-- Timeline Output -->
+      <div class="max-w-4xl mx-auto mt-10" id="timeline-output"></div>
+    </section>
+
+
+    <section id="vision-board" class="py-16 bg-white text-center">
+      <h2 class="text-3xl font-extrabold mb-8 text-purple-700">Vision Board</h2>
+
+      <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-6">
+        
+        <!-- Add Text Quote -->
+        <div class="bg-gray-50 p-6 rounded-2xl shadow-lg">
+          <h3 class="font-bold mb-3 text-lg text-purple-600">Add Quote / Goal</h3>
+          <input id="vision-text" type="text" placeholder="Write something..."
+                class="w-full p-3 border border-gray-300 rounded-lg mb-3">
+          <button onclick="addVisionText()"
+                  class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">Add</button>
+        </div>
+
+        <!-- Upload Image -->
+        <div class="bg-gray-50 p-6 rounded-2xl shadow-lg">
+          <h3 class="font-bold mb-3 text-lg text-purple-600">Add Image</h3>
+          <input id="vision-image" type="file" accept="image/*"
+                class="w-full p-3 border border-gray-300 rounded-lg mb-3">
+          <button onclick="addVisionImage()"
+                  class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">Upload</button>
+        </div>
+
+        <!-- Display Board -->
+        <div class="bg-gray-50 p-6 rounded-2xl shadow-lg col-span-full">
+          <h3 class="font-bold mb-3 text-lg text-purple-600">Your Vision Board</h3>
+          <div id="vision-board-content" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+        </div>
+
+      </div>
+    </section>
+
+  </section>
+
+  <script>
+    const generateBtn = document.getElementById("generateBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const timetableOutput = document.getElementById("timetableOutput");
+    const timetableGrid = document.getElementById("timetableGrid");
+    const progressBar = document.getElementById("progressBar");
+
+    generateBtn.addEventListener("click", () => {
+      const hours = parseFloat(document.getElementById("hours").value);
+      const subjectsInput = document.getElementById("subjects").value.trim();
+
+      if (!hours || !subjectsInput) {
+        alert("Please enter both available hours and subjects!");
+        return;
+      }
+
+      timetableGrid.innerHTML = "";
+      const subjects = subjectsInput.split(",").map(s => s.trim()).filter(s => s !== "");
+      const sessionTime = 50; // minutes per session
+      const breakTime = 10; // minutes between sessions
+      const totalMinutes = hours * 60;
+      const totalSessions = Math.floor(totalMinutes / (sessionTime + breakTime));
+
+      let currentTime = new Date();
+      currentTime.setHours(9, 0, 0, 0);
+
+      const totalCards = totalSessions * 2 - 1; // sessions + breaks
+      let completed = 0;
+
+      for (let i = 0; i < totalSessions; i++) {
+        const subject = subjects[i % subjects.length];
+        const start = currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        currentTime.setMinutes(currentTime.getMinutes() + sessionTime);
+        const end = currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+        // Session Card
+        const card = document.createElement("div");
+        card.className = "bg-purple-100 p-5 rounded-xl shadow hover:shadow-lg transition text-purple-900 flex flex-col justify-between";
+        card.innerHTML = `
+          <div>
+            <h3 class="font-bold text-lg mb-1">${subject}</h3>
+            <p class="text-sm">${start} - ${end}</p>
+            <p class="text-xs text-gray-600">Focus Session</p>
+          </div>
+          <label class="flex items-center mt-3 space-x-2 text-sm">
+            <input type="checkbox" class="progress-check accent-purple-600">
+            <span>Done</span>
+          </label>
+        `;
+        timetableGrid.appendChild(card);
+
+        if (i < totalSessions - 1) {
+          currentTime.setMinutes(currentTime.getMinutes() + breakTime);
+          const breakCard = document.createElement("div");
+          breakCard.className = "bg-gray-100 p-4 rounded-xl shadow text-gray-700 text-center italic";
+          breakCard.innerHTML = `<p>☕ Break Time (${breakTime} min)</p>`;
+          timetableGrid.appendChild(breakCard);
+        }
+      }
+
+      timetableOutput.classList.remove("hidden");
+      downloadBtn.classList.remove("hidden");
+
+      // Progress bar logic
+      const checkboxes = document.querySelectorAll(".progress-check");
+      checkboxes.forEach(chk => {
+        chk.addEventListener("change", () => {
+          completed = document.querySelectorAll(".progress-check:checked").length;
+          const progress = (completed / checkboxes.length) * 100;
+          progressBar.style.width = progress + "%";
+        });
+      });
+    });
+
+    // PDF Download
+    downloadBtn.addEventListener("click", () => {
+      const element = document.getElementById("timetableOutput");
+      html2pdf().set({ margin: 0.5, filename: "StudyTimetable.pdf", html2canvas: { scale: 2 } })
+                .from(element)
+                .save();
+    });
+    
+    // Load vision board
+    document.addEventListener("DOMContentLoaded", loadVisionBoard);
+
+    function addVisionText() {
+      const text = document.getElementById("vision-text").value.trim();
+      if (!text) return;
+
+      const board = JSON.parse(localStorage.getItem("visionBoard")) || [];
+      board.push({ type: "text", content: text });
+      localStorage.setItem("visionBoard", JSON.stringify(board));
+
+      document.getElementById("vision-text").value = "";
+      loadVisionBoard();
+    }
+
+    function addVisionImage() {
+      const file = document.getElementById("vision-image").files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const board = JSON.parse(localStorage.getItem("visionBoard")) || [];
+        board.push({ type: "image", content: e.target.result });
+        localStorage.setItem("visionBoard", JSON.stringify(board));
+        loadVisionBoard();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function loadVisionBoard() {
+      const container = document.getElementById("vision-board-content");
+      const board = JSON.parse(localStorage.getItem("visionBoard")) || [];
+
+      container.innerHTML = board
+        .map(
+          (item) =>
+            item.type === "text"
+              ? `<p class="bg-white p-3 rounded-lg shadow text-gray-800 text-center">"${item.content}"</p>`
+              : `<img src="${item.content}" class="w-full h-40 object-cover rounded-lg shadow">`
+        )
+        .join("");
+    }
+    let milestones = [];
+
+    document.getElementById("milestone-input").addEventListener("keyup", (e) => {
+      if (e.key === "Enter" && e.target.value.trim() !== "") {
+        milestones.push(e.target.value.trim());
+        e.target.value = "";
+        renderMilestones();
+      }
+    });
+
+    function renderMilestones() {
+      const list = document.getElementById("milestone-list");
+      list.innerHTML = milestones
+        .map((m, i) => `
+          <li class="flex justify-between bg-gray-100 p-2 rounded">
+            <span>${m}</span>
+            <button onclick="removeMilestone(${i})" class="text-red-500">✕</button>
+          </li>
+        `)
+        .join("");
+    }
+
+    function removeMilestone(i) {
+      milestones.splice(i, 1);
+      renderMilestones();
+    }
+
+    // Save to localStorage
+    function saveGoal90() {
+      const plan = {
+        goal: document.getElementById("goal-name").value,
+        why: document.getElementById("goal-why").value,
+        milestones,
+        notes: document.getElementById("weekly-notes").value,
+        startDate: new Date().toISOString()
+      };
+
+      localStorage.setItem("goals90", JSON.stringify(plan));
+      generateTimeline();
+    }
+
+    // Generate 90 day timeline
+    function generateTimeline() {
+      const plan = JSON.parse(localStorage.getItem("goals90"));
+      const timelineDiv = document.getElementById("timeline-output");
+
+      if (!plan) return;
+
+      let html = `
+        <h3 class="text-2xl font-bold text-purple-600 mb-4">Your 90-Day Timeline</h3>
+        <div class="grid md:grid-cols-3 gap-4">
+      `;
+
+      for (let day = 1; day <= 90; day++) {
+        html += `
+          <div class="p-4 bg-white shadow rounded-lg">
+            <h4 class="font-bold text-gray-800">Day ${day}</h4>
+            <p class="text-gray-500 text-sm">Progress note:</p>
+            <textarea class="w-full p-2 mt-2 border rounded-lg"
+                      onchange="saveProgress(${day}, this.value)"
+                      >${plan[`day${day}`] || ""}</textarea>
+          </div>
+        `;
+      }
+
+      html += "</div>";
+
+      timelineDiv.innerHTML = html;
+    }
+
+    // Save daily notes
+    function saveProgress(day, text) {
+      const plan = JSON.parse(localStorage.getItem("goals90"));
+      plan[`day${day}`] = text;
+      localStorage.setItem("goals90", JSON.stringify(plan));
+    }
+
+    // Load timeline on page load
+    document.addEventListener("DOMContentLoaded", generateTimeline);
+    function deleteGoal90() {
+    const confirmDelete = confirm("Are you sure you want to delete your 90-Day Plan? This cannot be undone.");
+
+    if (!confirmDelete) return;
+
+    // Remove from storage
+    localStorage.removeItem("goals90");
+
+    // Reset UI
+    milestones = [];
+    document.getElementById("goal-name").value = "";
+    document.getElementById("goal-why").value = "";
+    document.getElementById("weekly-notes").value = "";
+    document.getElementById("milestone-list").innerHTML = "";
+    document.getElementById("timeline-output").innerHTML = "";
+
+    alert("Your 90-Day Plan has been deleted.");
+  }
+
+  </script>
+</body>
+</html>

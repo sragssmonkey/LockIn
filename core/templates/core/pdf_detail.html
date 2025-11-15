@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{{ pdf.title }} – Flashcards</title>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="max-w-4xl mx-auto p-8 bg-white rounded-2xl shadow-xl mt-10">
+
+    <!-- Header -->
+    <h2 class="text-3xl font-extrabold text-purple-700">{{ pdf.title }}</h2>
+    <p class="text-sm text-gray-500">Uploaded: {{ pdf.uploaded_at }}</p>
+
+    <!-- Extracted Text -->
+    <section class="mt-8">
+        <h3 class="text-xl font-semibold text-gray-800 mb-3">📄 Extracted Text</h3>
+
+        <div id="rawText"
+             class="prose max-h-60 overflow-auto p-4 border rounded-lg bg-gray-50 shadow-inner text-gray-700 leading-relaxed">
+            {{ pdf.raw_text|default:"(No text extracted)"|linebreaks }}
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="mt-5 flex gap-4">
+            <button id="makeFlashcards"
+                    class="bg-purple-600 hover:bg-purple-700 transition text-white px-5 py-2 rounded-lg shadow">
+                ⚡ Generate Flashcards
+            </button>
+
+            <button id="downloadTxt"
+                    class="bg-gray-700 hover:bg-gray-800 transition text-white px-5 py-2 rounded-lg shadow">
+                ⬇️ Download Text
+            </button>
+        </div>
+
+        <!-- Flashcards -->
+        <h3 class="text-xl font-semibold text-gray-800 mt-10 mb-3">🎴 Flashcards</h3>
+
+        <div id="flashcards" 
+             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        </div>
+        <button id="makeQuiz"
+                class="bg-blue-600 hover:bg-blue-700 transition text-white px-5 py-2 rounded-lg shadow">
+            📝 Generate MCQ Quiz
+        </button>
+
+        <div id="quizContainer" class="mt-6 p-4 bg-blue-50 rounded-lg text-gray-800 whitespace-pre-line"></div>
+
+    </section>
+</div>
+
+<!-- Flashcard Flip Animation + JS -->
+<style>
+    .flip-card {
+        perspective: 1000px;
+        width: 100%;
+        height: 220px; /* FIXED uniform height */
+    }
+
+    .flip-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.6s;
+    }
+
+    .flip-card:hover .flip-inner {
+        transform: rotateY(180deg);
+    }
+
+    .flip-front, .flip-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 1rem;
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .flip-front {
+        background-color: #f3e8ff; /* purple-50 */
+    }
+
+    .flip-back {
+        background-color: #7c3aed; /* purple-600 */
+        color: white;
+        transform: rotateY(180deg);
+    }
+</style>
+
+<script>
+// References
+const makeBtn = document.getElementById('makeFlashcards');
+const rawTextEl = document.getElementById('rawText');
+const flashArea = document.getElementById('flashcards');
+const downloadBtn = document.getElementById('downloadTxt');
+
+// Splitting logic
+function splitIntoSentences(text) {
+    return text.split(/(?<=[.?!])\s+(?=[A-Z0-9])/g)
+               .filter(s => s.trim().length > 30);
+}
+
+function autoFlashcards(text) {
+    const sentences = splitIntoSentences(text);
+    const cards = [];
+
+    for (let s of sentences) {
+        const parts = s.split(/[:\-–—]| — | - /);
+        if (parts.length >= 2) {
+            cards.push({ 
+                front: parts[0].trim(), 
+                back: parts.slice(1).join(" - ").trim() 
+            });
+        } else {
+            const words = s.split(" ");
+            cards.push({
+                front: words.slice(0, 6).join(" ") + "...",
+                back: words.slice(6, 40).join(" ") + (words.length > 40 ? "..." : "")
+            });
+        }
+    }
+    return cards;
+}
+
+// Generate Flashcards
+makeBtn.addEventListener('click', () => {
+    const text = rawTextEl.innerText.trim();
+    if (!text) return alert("No extracted text available.");
+
+    const cards = autoFlashcards(text);
+
+    flashArea.innerHTML = "";
+    cards.slice(0, 24).forEach(card => {
+        const el = document.createElement("div");
+        el.className = "flip-card";
+
+        el.innerHTML = `
+            <div class="flip-inner bg-white rounded-xl shadow-lg p-4 cursor-pointer">
+                <div class="flip-front absolute w-full h-full rounded-xl bg-purple-50 p-4 flex flex-col justify-center">
+                    <h4 class="font-semibold text-purple-700 text-lg">${card.front}</h4>
+                </div>
+                <div class="flip-back absolute w-full h-full rounded-xl bg-purple-600 text-white p-4 flex flex-col justify-center">
+                    <p>${card.back}</p>
+                </div>
+            </div>
+        `;
+
+        flashArea.appendChild(el);
+    });
+});
+
+// Download text
+downloadBtn.addEventListener('click', () => {
+    const text = rawTextEl.innerText;
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "{{ pdf.title }}.txt";
+    a.click();
+
+    URL.revokeObjectURL(url);
+});
+document.addEventListener("DOMContentLoaded", () => {
+
+  const quizBtn = document.getElementById("makeQuiz");
+  const quizContainer = document.getElementById("quizContainer");
+
+  if (!quizBtn || !quizContainer) {
+    console.error("❌ makeQuiz or quizContainer not found in DOM");
+    return;
+  }
+
+  /* -----------------------------------
+        FETCH QUIZ FROM DJANGO
+  ----------------------------------- */
+  quizBtn.addEventListener("click", async () => {
+    quizContainer.innerHTML =
+      "<div class='p-4 bg-blue-50 rounded'>Generating quiz... ⏳</div>";
+
+    try {
+      const res = await fetch(`/generate_quiz/{{ pdf.pk }}/`);
+      const data = await res.json();
+
+      if (data.error) {
+        quizContainer.innerHTML =
+          `<div class="p-4 bg-red-100 text-red-700 rounded">${data.error}</div>`;
+        return;
+      }
+
+      const mcqs = data.mcqs;
+      if (!Array.isArray(mcqs) || mcqs.length === 0) {
+        quizContainer.innerHTML =
+          `<div class="p-4 bg-yellow-100 text-yellow-700 rounded">No questions generated.</div>`;
+        return;
+      }
+
+      renderQuiz(mcqs);
+
+    } catch (err) {
+      quizContainer.innerHTML =
+        `<div class="p-4 bg-red-100 text-red-700 rounded">Error: ${err}</div>`;
+    }
+  });
+
+
+  /* -----------------------------------
+           RENDER QUIZ FUNCTION
+  ----------------------------------- */
+  function renderQuiz(mcqs) {
+    let current = 0;
+    let score = 0;
+
+    quizContainer.innerHTML = `
+      <div id="qCard" class="p-6 bg-white rounded shadow"></div>
+
+      <div class="mt-4 flex justify-between items-center">
+        <div id="progress" class="text-sm text-gray-600">Question 1 / ${mcqs.length}</div>
+        <button id="nextBtn" class="bg-purple-600 text-white px-4 py-2 rounded">Next</button>
+      </div>
+
+      <div id="result" class="mt-4"></div>
+    `;
+
+    const qCard = document.getElementById("qCard");
+    const nextBtn = document.getElementById("nextBtn");
+    const progress = document.getElementById("progress");
+
+    function showQuestion(index) {
+      const q = mcqs[index] || {};
+
+      // SAFE FALLBACKS
+      const opts = Array.isArray(q.options)
+        ? q.options
+        : ["Option A", "Option B", "Option C", "Option D"];
+
+      const answer = typeof q.answer === "string"
+        ? q.answer.trim()
+        : "A";
+
+      const explanation = q.explanation || "No explanation provided.";
+
+      qCard.innerHTML = `
+        <h3 class="font-semibold text-lg text-purple-700 mb-2">
+          ${index + 1}. ${q.question || "No question text available."}
+        </h3>
+
+        <div id="opts" class="grid gap-2">
+          ${opts.map((o, i) => `
+            <button class="optBtn w-full text-left p-3 border rounded hover:bg-gray-50"
+              data-opt="${String.fromCharCode(65+i)}">${o}</button>
+          `).join("")}
+        </div>
+
+        <div id="explain" class="mt-3 text-sm text-gray-600 hidden">
+          <strong>Answer:</strong> <span id="answerText"></span>
+          <div id="exText" class="mt-2"></div>
+        </div>
+      `;
+
+      progress.textContent = `Question ${index + 1} / ${mcqs.length}`;
+
+      // OPTION CLICK EVENTS
+      document.querySelectorAll(".optBtn").forEach(btn => {
+        btn.addEventListener("click", () => {
+
+          // disable all buttons
+          document.querySelectorAll(".optBtn").forEach(b => b.disabled = true);
+
+          const selected = btn.getAttribute("data-opt");
+
+          if (selected === answer) {
+            score++;
+            btn.classList.add("bg-green-100", "border-green-300");
+          } else {
+            btn.classList.add("bg-red-100", "border-red-300");
+
+            // highlight correct answer
+            document.querySelectorAll(".optBtn").forEach(b => {
+              if (b.getAttribute("data-opt") === answer)
+                b.classList.add("bg-green-100", "border-green-300");
+            });
+          }
+
+          // show explanation
+          document.getElementById("answerText").textContent = answer;
+          document.getElementById("exText").textContent = explanation;
+          document.getElementById("explain").classList.remove("hidden");
+
+        });
+      });
+    }
+
+    showQuestion(current);
+
+    nextBtn.addEventListener("click", () => {
+      if (current < mcqs.length - 1) {
+        current++;
+        showQuestion(current);
+      } else {
+        quizContainer.innerHTML = `
+          <div class="p-6 bg-white rounded shadow text-center">
+            <h3 class="text-2xl font-bold text-purple-700">Quiz Complete 🎉</h3>
+            <p class="mt-3 text-gray-700">Score: ${score} / ${mcqs.length}</p>
+
+            <button id="retry"
+              class="mt-4 bg-purple-600 text-white px-4 py-2 rounded">
+              Retry Quiz
+            </button>
+          </div>
+        `;
+
+        document.getElementById("retry").addEventListener("click", () => {
+          renderQuiz(mcqs);
+        });
+      }
+    });
+
+  }
+
+});
+</script>
+
+</body>
+</html>

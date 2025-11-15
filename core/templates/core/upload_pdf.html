@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Upload PDF</title>
+</head>
+
+<body class="bg-gradient-to-br from-purple-100 via-white to-purple-50 min-h-screen flex items-center justify-center p-6">
+
+<div class="w-full max-w-xl bg-white rounded-3xl shadow-xl p-10 border border-purple-100">
+
+    <!-- Heading -->
+    <h2 class="text-3xl font-extrabold text-purple-700 text-center mb-6">
+        📄 Upload Your PDF
+    </h2>
+
+    <p class="text-center text-gray-600 mb-8">
+        We’ll extract the text and help you create flashcards instantly.
+    </p>
+
+    <!-- Error -->
+    {% if error %}
+    <div class="bg-red-100 text-red-700 p-4 rounded-lg mb-6 text-center border border-red-200">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- FORM -->
+    <form method="post" action="{% url 'upload_pdf' %}" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Title Input -->
+        <div>
+            <label class="block text-purple-700 font-semibold mb-2">Title</label>
+            <div class="border rounded-lg p-3 bg-purple-50">
+                {{ form.title }}
+            </div>
+        </div>
+
+        <!-- File Input -->
+        <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-purple-300 
+            border-dashed rounded-xl cursor-pointer bg-purple-50 hover:bg-purple-100 transition">
+
+            <div class="flex flex-col items-center space-y-2 text-purple-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115 9h1a4 4 0 110 8H7z" />
+                </svg>
+                <span class="font-medium">Click to upload your PDF</span>
+            </div>
+
+            {{ form.file }}
+        </label>
+
+        <!-- Button -->
+        <button class="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold shadow-md 
+                       hover:bg-purple-700 hover:shadow-lg transition active:scale-[0.98]">
+            Upload & Extract PDF ✨
+        </button>
+    </form>
+
+    <p class="text-center text-gray-500 text-sm mt-6">
+        Accepted format: <span class="font-semibold text-purple-600">PDF only</span>
+    </p>
+
+</div>
+
+</body>
+</html>
