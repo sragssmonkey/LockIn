@@ -148,5 +148,5 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "core/static"]
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ["localhost", ".onrender.com"]
