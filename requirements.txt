@@ -1,0 +1,10 @@
+Django>=4.2,<5.0
+gunicorn
+whitenoise
+requests
+python-dotenv
+pillow
+PyPDF2
+groq
+djangorestframework
+django-cors-headers
