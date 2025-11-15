@@ -1,13 +1,17 @@
 services:
   - type: web
     name: LockIn
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn LockIn.wsgi:application"
+    env: docker
     plan: free
     autoDeploy: true
+    buildCommand: docker build -t smartstudy .
+    startCommand: docker run -p 8000:8000 smartstudy
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: LockIn.settings
       - key: PYTHON_VERSION
-        value: 3.10
+        value: 3.10.12
+      - key: GROQ_API_KEY
+        sync: false  # set manually on Render
+      - key: SECRET_KEY
+        sync: false  # set manually on Render
