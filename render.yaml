@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: LockIn
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn LockIn.wsgi:application"
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: LockIn.settings
+      - key: PYTHON_VERSION
+        value: 3.10

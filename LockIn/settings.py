@@ -41,6 +41,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -139,3 +142,11 @@ TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 import os
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "core/static"]
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+DEBUG = False
+ALLOWED_HOSTS = ["localhost", ".onrender.com"]
